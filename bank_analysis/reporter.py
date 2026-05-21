@@ -9,23 +9,49 @@ def generate_html_report(items, output_file="output/output.html"):
     total_msi = 0.0
     total_refunds = 0.0
     total_prepayments = 0.0
+    previous_balance = 0.0
     
+    # First loop: Calculate raw totals for the top summary widgets
     for item in items:
-        cat = item['category']
         amt = item['amount']
-        category_totals[cat] += amt
-        category_items[cat].append(item)
-        
-        if item['type'] == 'charge':
+        if item['type'] == 'previous_balance':
+            previous_balance += amt
+        elif item['type'] == 'charge':
             total_charges += amt
         elif item['type'] == 'msi':
             total_msi += amt
         elif item['type'] == 'refund':
             total_refunds += amt
-        elif item['type'] == 'prepayment':
+        elif item['type'] in ('payment', 'prepayment'):
             total_prepayments += amt
 
-    total_net_calc = total_charges + total_msi + total_refunds + total_prepayments
+    total_net_calc = previous_balance + total_charges + total_msi + total_refunds + total_prepayments
+    
+    # Second loop: Populate categories, offsetting previous_balance against payments
+    balance_to_offset = previous_balance
+    
+    for item in items:
+        if item['type'] == 'previous_balance':
+            continue  # Don't show Adeudo Anterior in categories
+            
+        amt = item['amount']
+        
+        # Absorb payments to pay off the Adeudo Anterior first
+        if amt < 0 and item['type'] in ('payment', 'prepayment') and balance_to_offset > 0:
+            offset = min(abs(amt), balance_to_offset)
+            amt += offset
+            balance_to_offset -= offset
+            
+            # If payment was fully absorbed by the previous balance, don't show it
+            if abs(amt) < 0.01:
+                continue
+                
+        cat = item['category']
+        category_totals[cat] += amt
+        
+        item_copy = dict(item)
+        item_copy['amount'] = amt
+        category_items[cat].append(item_copy)
     
     # Sort categories descending by amount for the TABLE
     sorted_categories_desc = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
@@ -82,7 +108,8 @@ def generate_html_report(items, output_file="output/output.html"):
             'total': total,
             'pct': pct,
             'color': color,
-            'tx_html': tx_list_html
+            'tx_html': tx_list_html,
+            'count': len(category_items[cat])
         })
 
     # Generate Table HTML
@@ -96,7 +123,7 @@ def generate_html_report(items, output_file="output/output.html"):
             <td class="px-4 py-3">
                 <div class="flex items-center space-x-3">
                     <div class="w-2.5 h-2.5 rounded-full ring-2 ring-white shadow-sm" style="background-color: {row['color']}"></div>
-                    <span class="font-medium text-slate-700 text-sm group-hover:text-slate-900">{row['cat']}</span>
+                    <span class="font-medium text-slate-700 text-sm group-hover:text-slate-900">{row['cat']} <span class="text-xs text-slate-400 font-normal">({row['count']})</span></span>
                 </div>
             </td>
             <td class="px-4 py-3 text-right text-xs text-slate-500 font-mono">
@@ -155,9 +182,13 @@ def generate_html_report(items, output_file="output/output.html"):
         </header>
 
         <!-- R2: Widgets Compactos -->
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cargos</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Adeudo Anterior</p>
+                <p class="text-lg font-bold text-slate-700">${previous_balance:,.2f}</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cargos Mes</p>
                 <p class="text-lg font-bold text-rose-600">${total_charges:,.2f}</p>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
@@ -165,8 +196,8 @@ def generate_html_report(items, output_file="output/output.html"):
                 <p class="text-lg font-bold text-rose-500">${total_msi:,.2f}</p>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pago adelantado</p>
-                <p class="text-lg font-bold text-emerald-600">-${abs(total_refunds):,.2f}</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pagos / Abonos</p>
+                <p class="text-lg font-bold text-emerald-600">-${abs(total_refunds + total_prepayments):,.2f}</p>
             </div>
         </div>
 

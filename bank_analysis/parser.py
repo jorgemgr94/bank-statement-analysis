@@ -1,6 +1,6 @@
 import re
 import pdfplumber
-from .config import TRANSACTION_PATTERN, MSI_PATTERN, PAYMENT_PATTERN
+from .config import TRANSACTION_PATTERN, MSI_PATTERN, PREVIOUS_BALANCE_PATTERN
 from .utils import parse_amount, categorize
 
 def extract_data(pdf_path):
@@ -21,85 +21,75 @@ def extract_data(pdf_path):
             for line in lines:
                 line = line.strip()
                 
-                # 1. Try MSI Match first (more specific)
-                # Just check for the "X de Y" pattern which is characteristic of MSI lines in this statement
-                msi_line_match = re.search(r"(\d+)\s+de\s+(\d+)", line)
-                if msi_line_match and "SPEI" not in line:
-                    # It's likely an MSI line.
-                    p_match = PAYMENT_PATTERN.match(line)
-                    if p_match:
-                         date = p_match.group(1)
-                         desc = p_match.group(2)
-                         amount_str = p_match.group(3)
-                         
-                         transactions.append({
-                            "date": date,
-                            "description": desc.strip() + " (Mensualidad)",
-                            "amount": parse_amount(amount_str),
-                            "category": categorize(desc),
-                            "type": "msi"
-                        })
-                         continue
-
-                # 2. Try Transaction Match (Charges)
-                t_match = TRANSACTION_PATTERN.match(line)
-                if t_match:
-                    date = t_match.group(1)
-                    desc = t_match.group(2)
-                    amount1_str = t_match.group(3)
-                    amount2_str = t_match.group(4)
+                # 0. Try Previous Balance
+                pb_match = PREVIOUS_BALANCE_PATTERN.search(line)
+                if pb_match:
+                    transactions.append({
+                        "date": "N/A",  # Balance doesn't have a specific operation date
+                        "description": "Adeudo del periodo anterior",
+                        "amount": parse_amount(pb_match.group(1)),
+                        "category": "Balance",
+                        "type": "previous_balance"
+                    })
+                    continue
+                
+                # 1. Try MSI Match first
+                msi_match = MSI_PATTERN.match(line)
+                if msi_match:
+                    date = msi_match.group(1)
+                    desc = msi_match.group(2)
+                    amount_str = msi_match.group(3)
                     
-                    if amount2_str:
-                        amount = parse_amount(amount2_str)
-                    else:
-                        amount = parse_amount(amount1_str)
+                    # Clean up description (remove RFC stuff if present)
+                    desc_clean = desc.split(';')[0].strip()
                     
                     transactions.append({
                         "date": date,
-                        "description": desc.strip(),
-                        "amount": amount,
-                        "category": categorize(desc),
-                        "type": "charge"
+                        "description": desc_clean + " (Mensualidad)",
+                        "amount": parse_amount(amount_str),
+                        "category": categorize(desc_clean),
+                        "type": "msi"
                     })
                     continue
 
-                # 3. Try Payment Match
-                p_match = PAYMENT_PATTERN.match(line)
-                if p_match:
-                    date = p_match.group(1)
-                    desc = p_match.group(2)
-                    amount_str = p_match.group(3)
+                # 2. Try Transaction Match (Charges, Payments, Refunds)
+                t_match = TRANSACTION_PATTERN.match(line)
+                if t_match:
+                    # In the new format, the transaction has two dates, we use the first (operation date)
+                    date = t_match.group(1)
+                    desc = t_match.group(3)
+                    sign = t_match.group(4)
+                    amount_str = t_match.group(5)
+                    
                     amount = parse_amount(amount_str)
                     
-                    # Logic:
-                    # SPEI payments -> check amount to decide if it's Prepayment or Settlement.
-                    # Other -> Refund.
+                    # Clean up description
+                    desc_clean = desc.split(';')[0].strip()
                     
-                    item_type = "refund"
-                    amount_val = -amount # Default negative for validation logic
-                    
-                    if "SPEI" in desc.upper():
-                        item_type = "payment"
-                        # Heuristic: If amount ~36k, assume previous settlement. 
-                        # If ~4k, assume prepayment in this period.
-                        if amount > 10000:
-                            # Ignore previous balance settlement for the "New Debt" calculation
-                            item_type = "settlement_ignored"
-                            amount_val = 0 
-                        else:
-                            item_type = "prepayment"
-                            amount_val = -amount
-                    else:
-                        # Refund
-                        pass
-
-                    if item_type != "settlement_ignored":
+                    if sign == '+':
+                        # Charge
                         transactions.append({
                             "date": date,
-                            "description": desc.strip(),
+                            "description": desc_clean,
+                            "amount": amount,
+                            "category": categorize(desc_clean),
+                            "type": "charge"
+                        })
+                    elif sign == '-':
+                        # Payment or refund
+                        item_type = "refund"
+                        amount_val = -amount # Amount should be negative
+                        
+                        if "SPEI" in desc_clean.upper():
+                            item_type = "payment"
+
+                        transactions.append({
+                            "date": date,
+                            "description": desc_clean,
                             "amount": amount_val,
-                            "category": categorize(desc),
+                            "category": categorize(desc_clean),
                             "type": item_type
                         })
+                    continue
 
     return transactions
