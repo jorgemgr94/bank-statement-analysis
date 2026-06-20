@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import patch, MagicMock
 from bank_analysis.parser import extract_data
 
@@ -34,7 +35,7 @@ def test_refund_transaction(mock_open):
     result = extract_data("fake.pdf")
     assert len(result) == 1
     assert result[0]["type"] == "refund"
-    assert result[0]["amount"] == -102.33
+    assert result[0]["amount"] == Decimal("-102.33")
 
 
 @patch("bank_analysis.parser.pdfplumber.open")

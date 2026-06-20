@@ -1,5 +1,7 @@
 import os
 import tempfile
+from decimal import Decimal
+
 import pytest
 from bank_analysis.reporter import generate_html_report
 
@@ -8,49 +10,49 @@ SAMPLE_ITEMS = [
     {
         "date": "2026-01-01",
         "description": "Adeudo del periodo anterior",
-        "amount": 5000.0,
+        "amount": Decimal("5000"),
         "category": "Balance",
         "type": "previous_balance",
     },
     {
         "date": "2026-01-02",
         "description": "AMAZON",
-        "amount": 500.0,
+        "amount": Decimal("500"),
         "category": "Compras Online",
         "type": "charge",
     },
     {
         "date": "2026-01-03",
         "description": "HEB",
-        "amount": 300.0,
+        "amount": Decimal("300"),
         "category": "Supermercado",
         "type": "charge",
     },
     {
         "date": "2026-01-04",
         "description": "NETFLIX",
-        "amount": 200.0,
+        "amount": Decimal("200"),
         "category": "Suscripciones",
         "type": "charge",
     },
     {
         "date": "2026-01-05",
         "description": "PAGO POR SPEI",
-        "amount": -6000.0,
+        "amount": Decimal("-6000"),
         "category": "Pagos y Bonificaciones",
         "type": "payment",
     },
     {
         "date": "2026-01-06",
         "description": "LIVERPOOL (Mensualidad)",
-        "amount": 382.36,
+        "amount": Decimal("382.36"),
         "category": "Compras Online",
         "type": "msi",
     },
     {
         "date": "2026-01-07",
         "description": "CASHBACK",
-        "amount": -50.0,
+        "amount": Decimal("-50"),
         "category": "Pagos y Bonificaciones",
         "type": "refund",
     },
@@ -121,7 +123,7 @@ class TestGenerateHTMLReport:
             {
                 "date": "2026-01-01",
                 "description": "Test",
-                "amount": 100.0,
+                "amount": Decimal("100"),
                 "category": "Test",
                 "type": "charge",
             }

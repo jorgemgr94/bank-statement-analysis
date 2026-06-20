@@ -1,5 +1,6 @@
 import os
 import json
+from decimal import Decimal
 from collections import defaultdict
 
 def generate_html_report(items, output_file="output/output.html"):
@@ -7,14 +8,14 @@ def generate_html_report(items, output_file="output/output.html"):
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
 
-    category_totals = defaultdict(float)
+    category_totals = defaultdict(Decimal)
     category_items = defaultdict(list)
     
-    total_charges = 0.0
-    total_msi = 0.0
-    total_refunds = 0.0
-    total_prepayments = 0.0
-    previous_balance = 0.0
+    total_charges = Decimal('0')
+    total_msi = Decimal('0')
+    total_refunds = Decimal('0')
+    total_prepayments = Decimal('0')
+    previous_balance = Decimal('0')
     
     # First loop: Calculate raw totals for the top summary widgets
     for item in items:
@@ -48,7 +49,7 @@ def generate_html_report(items, output_file="output/output.html"):
             balance_to_offset -= offset
             
             # If payment was fully absorbed by the previous balance, don't show it
-            if abs(amt) < 0.01:
+            if abs(amt) < Decimal('0.01'):
                 continue
                 
         cat = item['category']
@@ -83,14 +84,14 @@ def generate_html_report(items, output_file="output/output.html"):
         # Chart Data (only positive)
         if total > 0:
             chart_labels.append(cat)
-            chart_data.append(round(total, 2))
+            chart_data.append(float(round(total, 2)))
         
         # Table Data (All)
         color = CHART_COLORS[color_index % len(CHART_COLORS)] if total > 0 else '#cbd5e1' # Grey for refunds
         if total > 0:
             color_index += 1
             
-        pct = (total / total_expenses_for_chart * 100) if (total > 0 and total_expenses_for_chart) else 0.0
+        pct = float(total / total_expenses_for_chart * 100) if (total > 0 and total_expenses_for_chart) else 0.0
         
         # Helper for transaction list HTML
         tx_list_html = ""

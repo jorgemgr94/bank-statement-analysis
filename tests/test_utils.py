@@ -1,24 +1,26 @@
+from decimal import Decimal
+
 from bank_analysis.utils import parse_amount, categorize
 
 
 class TestParseAmount:
     def test_with_dollar_and_commas(self):
-        assert parse_amount("$1,234.56") == 1234.56
+        assert parse_amount("$1,234.56") == Decimal("1234.56")
 
     def test_without_dollar(self):
-        assert parse_amount("1234.56") == 1234.56
+        assert parse_amount("1234.56") == Decimal("1234.56")
 
     def test_zero(self):
-        assert parse_amount("$0.00") == 0.0
+        assert parse_amount("$0.00") == Decimal("0")
 
     def test_large_number(self):
-        assert parse_amount("$12,345,678.90") == 12345678.9
+        assert parse_amount("$12,345,678.90") == Decimal("12345678.90")
 
     def test_small_decimal(self):
-        assert parse_amount("$0.99") == 0.99
+        assert parse_amount("$0.99") == Decimal("0.99")
 
     def test_no_commas(self):
-        assert parse_amount("$999.99") == 999.99
+        assert parse_amount("$999.99") == Decimal("999.99")
 
 
 class TestCategorize:

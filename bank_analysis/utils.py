@@ -1,8 +1,10 @@
+from decimal import Decimal
+
 from .config import CATEGORY_KEYWORDS
 
 def parse_amount(amount_str):
-    """Converts '$1,234.56' or '1,234.56' to float 1234.56"""
-    return float(amount_str.replace('$', '').replace(',', ''))
+    """Converts '$1,234.56' or '1,234.56' to Decimal('1234.56')"""
+    return Decimal(amount_str.replace('$', '').replace(',', ''))
 
 def categorize(description):
     """Categorizes a transaction based on its description."""
