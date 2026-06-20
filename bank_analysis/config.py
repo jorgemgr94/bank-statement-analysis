@@ -18,6 +18,13 @@ PREVIOUS_BALANCE_PATTERN = re.compile(
     r"Adeudo del periodo anterior\s*=\s*\$([\d,]+\.\d{2})"
 )
 
+# Pattern to strip trailing suffixes from descriptions (RFC, REF, etc.)
+# Examples: "; RFC: OPM150323DI1", "; REF: 123456789", ";REF:FOO"
+DESCRIPTION_CLEANUP_PATTERN = re.compile(r"\s*;\s*(?:RFC|REF)\s*:\s*\S+")
+
+# Pattern to strip trailing reference annotations like " *1234" or " *REF123"
+TRAILING_REF_PATTERN = re.compile(r"\s+\*\S+$")
+
 # Note: Payments and refunds in the new layout just appear as regular transactions with a `-` sign (e.g., PAGO POR SPEI -$35,000.00)
 # We use the TRANSACTION_PATTERN to capture them and classify them based on the sign and description.
 PAYMENT_PATTERN = None  # No longer needed, handled by TRANSACTION_PATTERN

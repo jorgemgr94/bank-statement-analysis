@@ -129,6 +129,34 @@ def test_charge_with_dollar_in_description(mock_open):
 
 
 @patch("bank_analysis.parser.pdfplumber.open")
+def test_description_cleanup_removes_ref(mock_open):
+    mock_pdf = MagicMock()
+    mock_pdf.pages = [
+        make_mock_page("2026-02-16 2026-02-17 AMAZON MX; REF: 123456789 +$500.00\n")
+    ]
+    mock_open.return_value.__enter__.return_value = mock_pdf
+
+    result = extract_data("fake.pdf")
+    assert len(result) == 1
+    assert "; REF:" not in result[0]["description"]
+    assert result[0]["description"].strip() == "AMAZON MX"
+
+
+@patch("bank_analysis.parser.pdfplumber.open")
+def test_description_cleanup_removes_trailing_asterisk(mock_open):
+    mock_pdf = MagicMock()
+    mock_pdf.pages = [
+        make_mock_page("2026-02-16 2026-02-17 SAMSENLINEA *12345 +$500.00\n")
+    ]
+    mock_open.return_value.__enter__.return_value = mock_pdf
+
+    result = extract_data("fake.pdf")
+    assert len(result) == 1
+    assert " *12345" not in result[0]["description"]
+    assert result[0]["description"].strip() == "SAMSENLINEA"
+
+
+@patch("bank_analysis.parser.pdfplumber.open")
 def test_description_cleanup_removes_rfc(mock_open):
     mock_pdf = MagicMock()
     mock_pdf.pages = [

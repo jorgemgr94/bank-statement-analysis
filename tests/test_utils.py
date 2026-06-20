@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from bank_analysis.utils import parse_amount, categorize
+from bank_analysis.utils import parse_amount, categorize, clean_description
 
 
 class TestParseAmount:
@@ -50,3 +50,35 @@ class TestCategorize:
 
     def test_cfe_returns_servicios(self):
         assert categorize("CFE") == "Servicios"
+
+    def test_hyphen_normalized(self):
+        assert categorize("H-E-B") == "Supermercado"
+
+    def test_dots_normalized(self):
+        assert categorize("C.F.E.") == "Servicios"
+
+    def test_mixed_punctuation(self):
+        assert categorize("WAL-MART #42") == "Supermercado"
+
+    def test_asterisk_in_description(self):
+        assert categorize("PAYPAL *NATURGYMEXI") == "Servicios"
+
+    def test_extra_spaces_normalized(self):
+        assert categorize("  AMAZON  ") == "Compras Online"
+
+
+class TestCleanDescription:
+    def test_removes_rfc_suffix(self):
+        assert clean_description("PAY PAL*LIVERPOOL; RFC: OPM150323DI1") == "PAY PAL*LIVERPOOL"
+
+    def test_removes_ref_suffix(self):
+        assert clean_description("AMAZON MX; REF: 123456789") == "AMAZON MX"
+
+    def test_removes_trailing_asterisk_ref(self):
+        assert clean_description("SAMSENLINEA *1234") == "SAMSENLINEA"
+
+    def test_no_cleanup_needed(self):
+        assert clean_description("NETFLIX") == "NETFLIX"
+
+    def test_cleanup_empty(self):
+        assert clean_description("") == ""

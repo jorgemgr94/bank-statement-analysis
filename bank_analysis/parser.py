@@ -1,7 +1,7 @@
 import pdfplumber
 from .config import TRANSACTION_PATTERN, MSI_PATTERN, PREVIOUS_BALANCE_PATTERN
 from .types import Transaction, TransactionType
-from .utils import parse_amount, categorize
+from .utils import parse_amount, categorize, clean_description
 
 
 def extract_data(pdf_path: str) -> list[Transaction]:
@@ -39,7 +39,7 @@ def extract_data(pdf_path: str) -> list[Transaction]:
                     desc = msi_match.group(2)
                     amount_str = msi_match.group(3)
 
-                    desc_clean = desc.split(";")[0].strip()
+                    desc_clean = clean_description(desc)
 
                     transactions.append({
                         "date": date,
@@ -58,7 +58,7 @@ def extract_data(pdf_path: str) -> list[Transaction]:
                     amount_str = t_match.group(5)
 
                     amount = parse_amount(amount_str)
-                    desc_clean = desc.split(";")[0].strip()
+                    desc_clean = clean_description(desc)
 
                     if sign == "+":
                         transactions.append({
