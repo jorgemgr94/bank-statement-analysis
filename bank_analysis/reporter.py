@@ -6,42 +6,44 @@ from collections import defaultdict
 
 from jinja2 import Environment, FileSystemLoader
 
+from .types import Transaction, TableRow
+
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
-CHART_COLORS = [
-    '#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#8b5cf6',
-    '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6',
-    '#10b981', '#22c55e', '#84cc16', '#eab308',
+CHART_COLORS: list[str] = [
+    "#f43f5e", "#ec4899", "#d946ef", "#a855f7", "#8b5cf6",
+    "#6366f1", "#3b82f6", "#0ea5e9", "#06b6d4", "#14b8a6",
+    "#10b981", "#22c55e", "#84cc16", "#eab308",
 ]
 
 
-def generate_html_report(items, output_file="output/output.html"):
+def generate_html_report(items: list[Transaction], output_file: str = "output/output.html") -> None:
     output_dir = os.path.dirname(output_file)
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
 
-    category_totals = defaultdict(Decimal)
-    category_items = defaultdict(list)
+    category_totals: dict[str, Decimal] = defaultdict(Decimal)
+    category_items: dict[str, list[Transaction]] = defaultdict(list)
 
-    total_charges = Decimal('0')
-    total_msi = Decimal('0')
-    total_refunds = Decimal('0')
-    total_prepayments = Decimal('0')
-    previous_balance = Decimal('0')
+    total_charges = Decimal("0")
+    total_msi = Decimal("0")
+    total_refunds = Decimal("0")
+    total_prepayments = Decimal("0")
+    previous_balance = Decimal("0")
 
     for item in items:
-        amt = item['amount']
-        if item['type'] == 'previous_balance':
+        amt = item["amount"]
+        if item["type"] == "previous_balance":
             previous_balance += amt
-        elif item['type'] == 'charge':
+        elif item["type"] == "charge":
             total_charges += amt
-        elif item['type'] == 'msi':
+        elif item["type"] == "msi":
             total_msi += amt
-        elif item['type'] == 'refund':
+        elif item["type"] == "refund":
             total_refunds += amt
-        elif item['type'] in ('payment', 'prepayment'):
+        elif item["type"] in ("payment", "prepayment"):
             total_prepayments += amt
 
     total_net_calc = previous_balance + total_charges + total_msi + total_refunds + total_prepayments
@@ -49,30 +51,30 @@ def generate_html_report(items, output_file="output/output.html"):
     balance_to_offset = previous_balance
 
     for item in items:
-        if item['type'] == 'previous_balance':
+        if item["type"] == "previous_balance":
             continue
 
-        amt = item['amount']
+        amt = item["amount"]
 
-        if amt < 0 and item['type'] in ('payment', 'prepayment') and balance_to_offset > 0:
+        if amt < 0 and item["type"] in ("payment", "prepayment") and balance_to_offset > 0:
             offset = min(abs(amt), balance_to_offset)
             amt += offset
             balance_to_offset -= offset
 
-            if abs(amt) < Decimal('0.01'):
+            if abs(amt) < Decimal("0.01"):
                 continue
 
-        cat = item['category']
+        cat = item["category"]
         category_totals[cat] += amt
-        category_items[cat].append({**item, 'amount': amt})
+        category_items[cat].append({**item, "amount": amt})
 
     sorted_categories_desc = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
 
-    chart_labels = []
-    chart_data = []
+    chart_labels: list[str] = []
+    chart_data: list[float] = []
     total_expenses_for_chart = sum(t for _, t in sorted_categories_desc if t > 0)
 
-    table_rows = []
+    table_rows: list[TableRow] = []
     color_index = 0
 
     for cat, total in sorted_categories_desc:
@@ -80,18 +82,18 @@ def generate_html_report(items, output_file="output/output.html"):
             chart_labels.append(cat)
             chart_data.append(float(round(total, 2)))
 
-        color = CHART_COLORS[color_index % len(CHART_COLORS)] if total > 0 else '#cbd5e1'
+        color = CHART_COLORS[color_index % len(CHART_COLORS)] if total > 0 else "#cbd5e1"
         if total > 0:
             color_index += 1
 
         pct = float(total / total_expenses_for_chart * 100) if (total > 0 and total_expenses_for_chart) else 0.0
 
         table_rows.append({
-            'cat': cat,
-            'total': total,
-            'pct': pct,
-            'color': color,
-            'count': len(category_items[cat]),
+            "cat": cat,
+            "total": total,
+            "pct": pct,
+            "color": color,
+            "count": len(category_items[cat]),
         })
 
     env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))

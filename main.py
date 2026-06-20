@@ -1,8 +1,10 @@
 import logging
 import os
 import traceback
+
 from bank_analysis.parser import extract_data
 from bank_analysis.reporter import generate_html_report
+from bank_analysis.types import Transaction
 
 logging.basicConfig(
     level=logging.INFO,
@@ -10,8 +12,8 @@ logging.basicConfig(
 )
 
 if __name__ == "__main__":
-    pdf_file = "input/statement.pdf"
-    output_target = "output/output.html"
+    pdf_file: str = "input/statement.pdf"
+    output_target: str = "output/output.html"
 
     if not os.path.exists(pdf_file):
         logging.error("No se encontró el archivo de entrada '%s'", pdf_file)
@@ -19,7 +21,7 @@ if __name__ == "__main__":
 
     logging.info("Analizando %s...", pdf_file)
     try:
-        items = extract_data(pdf_file)
+        items: list[Transaction] = extract_data(pdf_file)
         if not items:
             logging.warning("No se encontraron movimientos.")
         else:
