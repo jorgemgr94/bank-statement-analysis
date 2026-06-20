@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from decimal import Decimal
 from collections import defaultdict
 
@@ -371,4 +372,4 @@ def generate_html_report(items, output_file="output/output.html"):
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(html_content)
     
-    print(f"Reporte HTML generado en: {output_file}")
+    logging.info("Reporte HTML generado en: %s", output_file)
