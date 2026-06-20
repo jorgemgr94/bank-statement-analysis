@@ -25,7 +25,6 @@ PAYMENT_PATTERN = None  # No longer needed, handled by TRANSACTION_PATTERN
 # Categories mapping (keywords -> category)
 CATEGORY_KEYWORDS = {
     "7 ELEVEN": "Conveniencia",
-    "7ELEVEN": "Supermercado",
     "ABACUS.AI": "Trabajo",
     "ABARROTES MISION": "Supermercado",
     "BOSTON PIZZA CUMBRES": "Comida / Delivery",
