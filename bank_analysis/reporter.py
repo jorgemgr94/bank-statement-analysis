@@ -1,7 +1,12 @@
+import os
 import json
 from collections import defaultdict
 
 def generate_html_report(items, output_file="output/output.html"):
+    output_dir = os.path.dirname(output_file)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
     category_totals = defaultdict(float)
     category_items = defaultdict(list)
     
@@ -89,7 +94,7 @@ def generate_html_report(items, output_file="output/output.html"):
         
         # Helper for transaction list HTML
         tx_list_html = ""
-        for item in category_items[cat]:
+        for item in sorted(category_items[cat], key=lambda x: x['amount'], reverse=True):
             amt_class = 'text-rose-600' if item['amount'] > 0 else 'text-emerald-600'
             tx_list_html += f"""
                 <div class="flex justify-between items-center py-2 border-b border-slate-50 last:border-0 hover:bg-slate-50 px-2 rounded">
