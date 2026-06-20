@@ -18,7 +18,7 @@ def test_charge_transaction(mock_open):
     result = extract_data("fake.pdf")
     assert len(result) == 1
     assert result[0]["description"] == "AMAZON"
-    assert result[0]["amount"] == 381.0
+    assert result[0]["amount"] == Decimal("381")
     assert result[0]["type"] == "charge"
     assert result[0]["category"] == "Compras Online"
     assert result[0]["date"] == "2026-02-16"
@@ -49,7 +49,7 @@ def test_payment_via_spei(mock_open):
     result = extract_data("fake.pdf")
     assert len(result) == 1
     assert result[0]["type"] == "payment"
-    assert result[0]["amount"] == -5000.0
+    assert result[0]["amount"] == Decimal("-5000")
     assert result[0]["category"] == "Pagos y Bonificaciones"
 
 
@@ -79,7 +79,7 @@ def test_previous_balance(mock_open):
     result = extract_data("fake.pdf")
     assert len(result) == 1
     assert result[0]["type"] == "previous_balance"
-    assert result[0]["amount"] == 15000.0
+    assert result[0]["amount"] == Decimal("15000")
     assert result[0]["category"] == "Balance"
 
 
@@ -111,6 +111,21 @@ def test_empty_page_returns_empty(mock_open):
 
     result = extract_data("fake.pdf")
     assert result == []
+
+
+@patch("bank_analysis.parser.pdfplumber.open")
+def test_charge_with_dollar_in_description(mock_open):
+    mock_pdf = MagicMock()
+    mock_pdf.pages = [
+        make_mock_page("2026-03-05 2026-03-06 DONA TOTA $N +$381.00\n")
+    ]
+    mock_open.return_value.__enter__.return_value = mock_pdf
+
+    result = extract_data("fake.pdf")
+    assert len(result) == 1
+    assert result[0]["description"] == "DONA TOTA $N"
+    assert result[0]["amount"] == Decimal("381")
+    assert result[0]["type"] == "charge"
 
 
 @patch("bank_analysis.parser.pdfplumber.open")

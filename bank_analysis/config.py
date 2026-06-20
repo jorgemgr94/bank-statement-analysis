@@ -4,13 +4,13 @@ import re
 # Example: 2026-02-16 2026-02-17 AMAZON +$381.00
 # Example: 2026-02-17 2026-02-17 BONIFICACIÓN CON CASHBACK -$102.33
 TRANSACTION_PATTERN = re.compile(
-    r"^(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})\s+(.+?)\s+([+-])\$([\d,]+\.\d{2})$"
+    r"^(\d{4}-\d{2}-\d{2})\s+(\d{4}-\d{2}-\d{2})\s+(.+)\s+([+-])\$([\d,]+\.\d{2})$"
 )
 
 # New Regex for MSI (Compras a meses): Date Description Original Pending Payment X de Y Interest%
 # Example: 2025-11-24 PAY PAL*LIVERPOOL; RFC: OPM150323DI1 $2,294.15 $764.71 $382.36 4 de 6 0.00%
 MSI_PATTERN = re.compile(
-    r"^(\d{4}-\d{2}-(?:\d{2})?)\s*(.+?)\s+\$[\d,]+\.\d{2}\s+\$[\d,]+\.\d{2}\s+\$([\d,]+\.\d{2})\s+(\d+\s+de\s+\d+).*?$"
+    r"^(\d{4}-\d{2}-(?:\d{2})?)\s*(.+)\s+\$[\d,]+\.\d{2}\s+\$[\d,]+\.\d{2}\s+\$([\d,]+\.\d{2})\s+(\d+\s+de\s+\d+).*$"
 )
 
 # Regex for Previous Balance
