@@ -48,25 +48,13 @@ def generate_html_report(items: list[Transaction], output_file: str = "output/ou
 
     total_net_calc = previous_balance + total_charges + total_msi + total_refunds + total_prepayments
 
-    balance_to_offset = previous_balance
-
     for item in items:
         if item["type"] == "previous_balance":
             continue
 
-        amt = item["amount"]
-
-        if amt < 0 and item["type"] in ("payment", "prepayment") and balance_to_offset > 0:
-            offset = min(abs(amt), balance_to_offset)
-            amt += offset
-            balance_to_offset -= offset
-
-            if abs(amt) < Decimal("0.01"):
-                continue
-
         cat = item["category"]
-        category_totals[cat] += amt
-        category_items[cat].append({**item, "amount": amt})
+        category_totals[cat] += item["amount"]
+        category_items[cat].append(item)
 
     sorted_categories_desc = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
 
