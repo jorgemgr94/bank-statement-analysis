@@ -104,12 +104,14 @@ class TestGenerateHTMLReport:
         assert "Pagos / Abonos" in content
         assert "Total a Pagar" in content
 
-    def test_contains_chart_canvas(self, temp_output):
+    def test_contains_tabs_and_search(self, temp_output):
         generate_html_report(SAMPLE_ITEMS, temp_output)
         with open(temp_output) as f:
             content = f.read()
-        assert "categoryChart" in content
-        assert "Chart(" in content
+        assert "tab-panel-categories" in content
+        assert "tab-panel-concepts" in content
+        assert "concept-search" in content
+        assert "categoryChart" not in content
 
     def test_handles_empty_items(self, temp_output):
         generate_html_report([], temp_output)

@@ -66,6 +66,18 @@ class TestCategorize:
     def test_extra_spaces_normalized(self):
         assert categorize("  AMAZON  ") == "Compras Online"
 
+    def test_longest_match_wins_amazon_prime(self):
+        # 'AMAZONPRIMESUBS' (15 chars) should win over 'AMAZON' (6 chars)
+        assert categorize("STR*AMAZONPRIMESUBS") == "Suscripciones"
+
+    def test_longest_match_wins_uber_eats_vs_uber(self):
+        # 'UBER EATS' should win over 'UBER'
+        assert categorize("UBER EATS MX") == "Comida / Delivery"
+
+    def test_longest_match_cinepolis_dulceria(self):
+        # 'CINEPOLIS DULCERIA' should win over 'CINEPOLIS'
+        assert categorize("CINEPOLIS DULCERIA MX") == "Vacaciones / Entretenimiento"
+
 
 class TestCleanDescription:
     def test_removes_rfc_suffix(self):

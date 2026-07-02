@@ -23,10 +23,17 @@ def _strip_non_alnum(text: str) -> str:
 
 
 def categorize(description: str) -> str:
-    """Categorizes a transaction based on its description (normalized matching)."""
+    """Categorizes a transaction based on its description (normalized matching).
+
+    Uses a "longest match wins" strategy: when multiple keywords match the
+    description, the most specific (longest) one takes priority.
+    Example: 'STR*AMAZONPRIMESUBS' matches both 'AMAZON' and 'AMAZONPRIMESUBS',
+    but 'AMAZONPRIMESUBS' wins because it is longer.
+    """
     desc_norm = _strip_non_alnum(description.upper())
+    best_kw, best_cat = "", "Otros"
     for keyword, category in CATEGORY_KEYWORDS.items():
         kw_norm = _strip_non_alnum(keyword.upper())
-        if kw_norm in desc_norm:
-            return category
-    return "Otros"
+        if kw_norm in desc_norm and len(kw_norm) > len(best_kw):
+            best_kw, best_cat = kw_norm, category
+    return best_cat
