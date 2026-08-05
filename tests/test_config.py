@@ -75,7 +75,7 @@ class TestPreviousBalancePattern:
 class TestCategoryKeywords:
     def test_7eleven_as_conveniencia(self):
         assert "7 ELEVEN" in CATEGORY_KEYWORDS
-        assert CATEGORY_KEYWORDS["7 ELEVEN"] == "Conveniencia"
+        assert CATEGORY_KEYWORDS["7 ELEVEN"] == "Supermercado"
 
     def test_no_duplicate_cfe(self):
         keys = [k for k in CATEGORY_KEYWORDS if "CFE" in k]

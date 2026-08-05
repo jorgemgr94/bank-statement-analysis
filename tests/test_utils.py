@@ -45,6 +45,10 @@ class TestCategorize:
     def test_heb_returns_supermercado(self):
         assert categorize("HEB") == "Supermercado"
 
+    def test_convenience_stores_return_supermercado(self):
+        assert categorize("OXXO TORREMOLINOS") == "Supermercado"
+        assert categorize("7 ELEVEN") == "Supermercado"
+
     def test_uber_eats_returns_comida_delivery(self):
         assert categorize("UBER EATS") == "Comida / Delivery"
 
@@ -77,6 +81,66 @@ class TestCategorize:
     def test_longest_match_cinepolis_dulceria(self):
         # 'CINEPOLIS DULCERIA' should win over 'CINEPOLIS'
         assert categorize("CINEPOLIS DULCERIA MX") == "Vacaciones / Entretenimiento"
+
+    def test_new_supermarket_merchants(self):
+        assert categorize("ZUMA ABTS MERCO LIN VI") == "Supermercado"
+        assert categorize("PAYPAL*BODAURRERA") == "Supermercado"
+        assert categorize("CARNES JA CARLOS") == "Supermercado"
+
+    def test_school_merchants(self):
+        assert categorize("ANGEL COLOR") == "Escuela"
+        assert categorize("DEL SOL 1112 MP") == "Escuela"
+        assert categorize("DEL SOL 1188 MP") == "Escuela"
+        assert categorize("TIEND INT SUC MATRIZ") == "Escuela"
+
+    def test_new_food_merchants(self):
+        merchants = (
+            "COM RAP P LOCO SUC PLA",
+            "CAFET GABY S HIDAL",
+            "KK PASEO DE LA FE",
+            "ROCK&BILLY CITADEL",
+            "PANADERIA LEO 1",
+            "FENGFA COMIDA CANTONES",
+            "COMERC ALIMENTOS GOOL",
+        )
+        for merchant in merchants:
+            assert categorize(merchant) == "Comida / Delivery"
+
+    def test_new_transport_merchants(self):
+        merchants = (
+            "PAY PAL*KIGO",
+            "PAYPAL*KIGO",
+            "OPENPAY*KIGO PARKIMOVI",
+            "CONEKTA*URBANI",
+        )
+        for merchant in merchants:
+            assert categorize(merchant) == "Transporte"
+
+    def test_new_entertainment_merchants(self):
+        merchants = (
+            "PAYPAL *EPIC GAMES",
+            "SULTANES BEBIDAS MU",
+            "ZUMA*EPIK LINDA VISTA",
+            "PINPEO*RAA FESTIVALES",
+        )
+        for merchant in merchants:
+            assert categorize(merchant) == "Vacaciones / Entretenimiento"
+
+    def test_new_services_and_shopping_merchants(self):
+        assert categorize("MERPAGO*RENTAMOVISTAR") == "Servicios"
+        assert categorize("PAYPAL*MICROSOFT") == "Compras Online"
+        assert categorize("HOME DEPOT M ALEMAN") == "Hogar / Mantenimiento"
+        assert categorize("BENAVI 330603 CITADEL") == "Salud"
+
+    def test_reviewed_merchants_that_remain_otros(self):
+        merchants = (
+            "PAYPAL",
+            "PY *INK D STORES",
+            "MERPAGO*ADALBERTOGUAD",
+            "GRUPO TTA ZEMAT",
+        )
+        for merchant in merchants:
+            assert categorize(merchant) == "Otros"
 
 
 class TestCleanDescription:

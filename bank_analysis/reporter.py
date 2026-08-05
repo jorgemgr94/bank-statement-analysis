@@ -33,6 +33,17 @@ def generate_html_report(items: list[Transaction], output_file: str = "output/ou
     total_prepayments = Decimal("0")
     previous_balance = Decimal("0")
 
+    # Las fechas de MSI corresponden a la compra original, no al periodo actual.
+    # Para el rango del reporte usamos únicamente movimientos regulares.
+    period_dates = sorted(
+        item["date"]
+        for item in items
+        if item["type"] not in ("previous_balance", "msi")
+        and item["date"] != "N/A"
+    )
+    period_start = period_dates[0] if period_dates else None
+    period_end = period_dates[-1] if period_dates else None
+
     for item in items:
         amt = item["amount"]
         if item["type"] == "previous_balance":
@@ -55,6 +66,12 @@ def generate_html_report(items: list[Transaction], output_file: str = "output/ou
         cat = item["category"]
         category_totals[cat] += item["amount"]
         category_items[cat].append(item)
+
+    # Dentro de cada categoría, mostrar primero los movimientos más recientes.
+    # sort() es estable, así que movimientos del mismo día conservan el orden
+    # original del estado de cuenta.
+    for category_transactions in category_items.values():
+        category_transactions.sort(key=lambda item: item["date"], reverse=True)
 
     sorted_categories_desc = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
 
@@ -101,6 +118,8 @@ def generate_html_report(items: list[Transaction], output_file: str = "output/ou
         total_charges=total_charges,
         total_msi=total_msi,
         total_payments=abs(total_refunds + total_prepayments),
+        period_start=period_start,
+        period_end=period_end,
         table_rows=table_rows,
         category_items=dict(category_items),
         all_transactions=all_transactions,
@@ -111,4 +130,3 @@ def generate_html_report(items: list[Transaction], output_file: str = "output/ou
         f.write(html_content)
 
     logging.info("Reporte HTML generado en: %s", output_file)
-

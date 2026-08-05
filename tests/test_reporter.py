@@ -104,6 +104,46 @@ class TestGenerateHTMLReport:
         assert "Pagos / Abonos" in content
         assert "Total a Pagar" in content
 
+    def test_contains_movement_period_below_summary(self, temp_output):
+        generate_html_report(SAMPLE_ITEMS, temp_output)
+        with open(temp_output) as f:
+            content = f.read()
+        assert "Periodo:" in content
+        assert '<time datetime="2026-01-02">2026-01-02</time>' in content
+        assert '<time datetime="2026-01-07">2026-01-07</time>' in content
+
+    def test_period_ignores_original_msi_date(self, temp_output):
+        items = [
+            {
+                "date": "2025-11-24",
+                "description": "COMPRA ANTIGUA (Mensualidad)",
+                "amount": Decimal("100"),
+                "category": "Compras Online",
+                "type": "msi",
+            },
+            {
+                "date": "2026-06-15",
+                "description": "PRIMER MOVIMIENTO",
+                "amount": Decimal("200"),
+                "category": "Otros",
+                "type": "charge",
+            },
+            {
+                "date": "2026-07-15",
+                "description": "ÚLTIMO MOVIMIENTO",
+                "amount": Decimal("300"),
+                "category": "Otros",
+                "type": "charge",
+            },
+        ]
+        generate_html_report(items, temp_output)
+        with open(temp_output) as f:
+            content = f.read()
+        assert "Periodo:" in content
+        assert '<time datetime="2026-06-15">2026-06-15</time>' in content
+        assert '<time datetime="2026-07-15">2026-07-15</time>' in content
+        assert '<time datetime="2025-11-24">' not in content
+
     def test_contains_tabs_and_search(self, temp_output):
         generate_html_report(SAMPLE_ITEMS, temp_output)
         with open(temp_output) as f:
@@ -148,3 +188,27 @@ class TestGenerateHTMLReport:
             content = f.read()
         assert "openModal" in content
         assert "closeModal" in content
+
+    def test_category_movements_are_sorted_by_date_descending(self, temp_output):
+        items = [
+            {
+                "date": "2026-01-01",
+                "description": "OLDER_HIGH_AMOUNT",
+                "amount": Decimal("999"),
+                "category": "Test",
+                "type": "charge",
+            },
+            {
+                "date": "2026-01-03",
+                "description": "NEWER_LOW_AMOUNT",
+                "amount": Decimal("1"),
+                "category": "Test",
+                "type": "charge",
+            },
+        ]
+        generate_html_report(items, temp_output)
+        with open(temp_output) as f:
+            content = f.read()
+
+        # Las últimas apariciones corresponden al contenedor del modal.
+        assert content.rfind("NEWER_LOW_AMOUNT") < content.rfind("OLDER_HIGH_AMOUNT")
